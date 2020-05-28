@@ -721,7 +721,7 @@ Collections.unmodifiableSortedSet();
 
 **同步视图**								
 
-如果有多个线程访问集合，可以确保集合不被意外的破坏，此时没必要使用线程安全的集合类。
+如果有多个线程访问集合，可以确保集合不被意外的破坏，此时没必要使用线程安全的集合类。用一个包装类包装了Map，对所有方法都用synchronized加锁，这样获得的线程安全性比concurrent集合要低很多。
 
 ```java
 Map<String, String> map = Collections.synchrizedMap(new HashMap<String, String>());
@@ -739,147 +739,6 @@ list.add(10); // 这里运行时会报错，classCastException
 
 
 
-### 第十四章：并发
-
-#### 14.1 线程
-
-```java
-Thread t = new Thread(new Runnable(){
-	@Override
-	public void run(){
-		///////
-	}
-});
-Thread t = new Thread(() -> System.out.println("In Java8, Lambda expression"));
-t.start();
-```
-
-Java.util.concurrent.Executors类提供了一系列工厂方法用于创建线程池，可以把多个线程放在一起进行更高效的管理。
-
-#### 14.2 线程中断
-
-可以使用interrupt方法来请求终止线程，此时线程的中断状态将被置位。每个线程都应该不时地检查这个标志，以判断线程是否被中断。
-
-但是，被阻塞（调用sleep或wait）的线程，不能检测中断状态
-
-```java
-Thread.currentThread().isInterrupted();
-
-```
-
-
-
-```java
-// 创建一个可缓存的线程池，但是不推荐，因为如果线程数创建过多会OOM
-ExecutorService executorService = Executors.newCachedThreadPool();
-ExecutorService executor = new ThreadPoolExecutor(10,10,60L, 
-                                                  TimeUnit.SECONDS, 
-                                                  new ArrayBlockingQueue(10));
-Runnable r = new Runnable(){
-	@Override
-	public void run(){
-		////
-	}
-}
-executorService.execute(r);
-executorService.shutdown();
-```
-
-
-
-**多线程为什么会有并发问题？**
-
-​		Java内存模型规定了所有的变量都存储在主内存中，每条线程有自己的工作内存；线程访问一个变量，首先将变量从主内存拷贝到工作内存，对变量的写操作，不会马上同步到主内存；不同的线程之间也无法直接访问对方工作内存中的变量，线程之间的变量传递需要通过主内存。
-
-**并发三要素？**
-
-1. 原子性：在一个操作中，CPU不可以在中途暂停然后再调度，即要么执行完成，要么不执行；
-2. 可见性：多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看得到修改的值；
-3. 有序性：程序执行的顺序按照代码的先后顺序执行。
-
-**不同场景的并发问题处理方法：**
-
-1. 对于一个变量，**只有一个线程执行写操作**，其他线程只是读操作，这时候可以用volatile：
-
-   ***volatile的特性：***保证可见性，但不保证原子性；禁止指令重排序；
-
-   ```java
-   // 单例模式 双重锁
-   // 需要volatile禁止指令重排序
-   private static volatile TestInstance myinstance;
-   public static TestInstance getInstance(){
-     if(myinstance == null){
-       synchronized (TestInstance.class){
-         if(myinstance == null){
-           myinstance = new TestInstance();
-         }
-       }
-     }
-     return myinstance; // 如果指令重排序，可能会返回一个没有初始化的对象
-   }
-   
-   ```
-
-   volatile是通过**内存屏障**来实现的，内存屏障会保证指令重排序的时候不会把内存屏障前后的指令混淆，强制将缓存的修改操作立即写到主内存，其他线程的缓存即刻失效，并从主内存读取修改后的值。
-
-2. Synchronized可以在**多个线程同时写**数据的情况下使用：
-
-   同一时间，只有一个线程会执行同步代码块。执行同步代码块，首先会执行monitorenter指令，退出时会执行monitorexit指令。
-
-   **重量级锁**
-
-   为了减少锁的获得和释放带来的性能消耗，Java1.6**引入偏向锁和轻量级锁**：
-
-   **偏向锁**：当线程A访问了加了同步锁的代码块的时候，会在对象头重存储当前线程的id，后续这个线程进入和退出这段代码块时，不需要再次加锁和释放锁。当锁总是被同一线程获得的时候，可以节省性能消耗。
-
-   **轻量级锁：** 在偏向锁的情况下，线程B也访问了代码块，此时对象头中的id不一样，所以这个锁升级为轻量级锁，并通过自旋的方式获取轻量级锁。
-
-   **重量级锁**：如果线程A或者线程B同时访问代码块，则轻量级锁会升级为重量级锁，一个线程获得锁的情况下，另一个只能进入阻塞等待。
-
-   **缺点**：不能设置锁超时的时间，不能通过代码释放锁，所以容易死锁。
-
-3. ReentranLock在多个条件变量和高度竞争锁的情况下更适用。
-
-   ```java
-   ReentrantLock reentrantLock = new ReentrantLock();
-   reentrantLock.lock();// 上锁
-   try{
-     // 睡眠2s
-     Thread.sleep(2000);
-   } catch (InterruptedException e){
-     e.printStackTrace();
-   } finally {
-     reentrantLock.unlock(); // 解锁
-   }
-   
-   // 可定时的锁请求 ：trylock
-   static class Thread_trylock extends Thread{
-     ReentrantLock reentrantLock;
-     public Thread_tryLock(ReentrantLock reentrantLock){
-       this.reentrantLock = reentrantLock;
-     }
-     
-     @Override
-     public void run(){
-       try{
-         boolean trylock = reentrantLock.tryLock(3, TimeUnit.SECONDS);
-         if(tryLock){
-           // trylock成功
-           // 执行内容
-         } else{
-           // trylock 超时 
-         }
-       } catch (InterruptedException e){
-         e.printStackTrace();
-       } finally {
-         // 解锁
-         reentrantLock.unlock();
-       }
-     }
-   }
-   ```
-
-   
 
 
 
@@ -891,7 +750,8 @@ executorService.shutdown();
 
 
 
-软件类，3道在线编程
+
+
 
 
 
