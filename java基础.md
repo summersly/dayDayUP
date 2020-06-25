@@ -89,7 +89,7 @@ public static void sleep(long millis);
 
 ### IO流
 
-![javaIO流](/Users/chengleiyi/Documents/Lernen/笔记/javaIO流.png)
+![javaIO流](/Users/chengleiyi/Documents/Lernen/笔记/pictures/javaIO流.png)
 
 其中，以Stream结尾的为字节流，以Writer或者Reader结尾的为字符流。
 
@@ -908,11 +908,64 @@ list.add(10); // 这里运行时会报错，classCastException
 
 32. Exception和RuntimeException区别：Exception可能是checked exception，强制要求被处理；而runtimeException可以不被处理，是unchecked exception。自定义exception的时候，继承哪一个都要根据实际情况来判断，如果是必须处理的异常，那么就继承exception。
 
-33. 
 
 
 
 
+
+
+
+
+
+
+
+
+
+### Question
+
+
+
+#### 5. 堆和栈
+
+JVM的内存区域主要划分为五个区域：方法区、堆、虚拟机栈、本地方法栈和程序计数器。其中方法区和堆是现场共享的，而栈和程序计数器是线程私有的。
+
+堆和栈的具体区别：
+
++ 堆中存放的是对象实例，栈中存放的是局部变量；
++ 堆中的内存更新速度没有栈中的快，因为栈中局部变量的生命周期较短；
++ 堆中的内存会被垃圾回收，栈中的内存在栈帧结束，即出栈的时候就会被释放。
+
+#### 6. 正则表达式
+
+java有四个内置的正则表达式方法，matches()、split()、replaceFirst()、replaceAll()
+
+还可以使用Pattern类和Matcher类进行匹配：
+
++ 首先，通过正则表达式创建Pattern对象;
+
++ 通过模式对象 `Pattern`，根据指定字符串创建匹配对象 `Matcher`
+
++ 通过匹配对象 `Matcher`，操作字符串。
+
+  ```java
+  Pattern pattern = Pattern.compile("\s+");
+  Matcher matcher = pattern.matcher(text);
+  matcher.find();
+  matcher.start();
+  matcher.end();
+  matcher.replaceAll("\t");
+  
+  ```
+
+  
+
+#### 7. 垃圾回收机制
+
+防止内存泄漏，有效的利用空闲内存
+
+
+
+#### 10. 
 
 
 
