@@ -743,17 +743,20 @@ Fourdp[i] = min(fourdp[j] * 2+ dp[i-j] )，j的 取值范围 [0，i )
 
 ### 单调栈
 
+题目和next相关的，局部最大值/最小值
+
 - [LeetCode 239. Sliding Window Maximum (hard)：维护单调递减队列，队头元素是当前窗口的最大值
 - [LeetCode 42. Trapping Rain Water (hard)：维护单调递减栈，遇到大的，计算中间能装雨水的面积
 - [LeetCode 84. Largest Rectangle in Histogram (hard)：维护单调递增栈，遇到小的，计算前面的最大面积
 - [LeetCode 85. Maximal Rectangle (hard)：动态规划题，用单调栈的话，要怎么理解？相当于对【0-i】行的数组构成的长方形求最大面积，每增加一行，重新构建长方形，重新求一次当前的最大面积。
-- [LeetCode 402. Remove K Digits (medium)](https://github.com/muyids/leetcode/blob/master/algorithms/401-500/402.remove-k-digits.md)
-- [LeetCode 503. Next Greater Element II (medium)](https://github.com/muyids/leetcode/blob/master/algorithms/501-600/503.next-greater-element-ii.md)
-- [LeetCode 768. Max Chunks To Make Sorted II (hard)](https://github.com/muyids/leetcode/blob/master/algorithms/701-800/768.max-chunks-to-make-sorted-ii.md)
-- [LeetCode 739. Daily Temperatures (medium)](https://github.com/muyids/leetcode/blob/master/algorithms/701-800/739.daily-temperatures.md)
-- [LeetCode 901. Online Stock Span (medium)](https://github.com/muyids/leetcode/blob/master/algorithms/901-1000/901.online-stock-span.md)
-- [LeetCode 1019. Next Greater Node In Linked List (medium)](https://github.com/muyids/leetcode/blob/master/algorithms/1001-1100/1019.next-greater-node-in-linked-list.md)
-- [LeetCode 907. Sum of Subarray Minimums (medium)](https://github.com/muyids/leetcode/blob/master/algorithms/901-1000/907.sum-of-subarray-minimums.md)
+- [LeetCode 402. Remove K Digits (medium)：从数字字符串中删掉这个数中的k位数字，小的数在前更小，所以维护一个单调递增的栈，一旦遇到比栈顶小的数/或者到结尾了，删除栈中的数字。
+- leetcode 496 下一个更大的元素1：
+- [LeetCode 503. Next Greater Element II (medium)
+- [LeetCode 768. Max Chunks To Make Sorted II (hard)
+- [LeetCode 739. Daily Temperatures (medium)
+- [LeetCode 901. Online Stock Span (medium)
+- [LeetCode 1019. Next Greater Node In Linked List (medium)
+- [LeetCode 907. Sum of Subarray Minimums (medium)
 
 
 
@@ -821,8 +824,49 @@ public TreeNode recoverFromPreorder(String S) {
 + nimsum依次异或堆的值，找到那个能将nimsum变成0的数字：
   + int tmp = nimsum^arr[i]; 
   + if(arr[i]-tmp > 0) 表明找到这个数
-  
-  
+
+
+
+
+
+### 字典序
+
+给定整数n和m, 将1到n的这n个整数按字典序排列之后, 求其中的第m个数。
+对于n=11, m=4, 按字典序排列依次为1, 10, 11, 2, 3, 4, 5, 6, 7, 8, 9, 因此第4个数是2.
+
+```java
+import java.util.*;
+public class Main{
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        long N = sc.nextLong();
+        long M = sc.nextLong();
+        System.out.print(dicM(N, M));
+    }
+    private static long dicM(long N, long M){
+				// 先确定第M个数是什么数字开头的？
+      	// 如果是1开头，那么1-N之间有多少个1开头的数字？
+      	// cntNum函数就是用来统计一共有多少个pre开头的数字存在
+      	// 如果1开头的count个数字大于等于M,那么M确实是1开头，pre*10，M--，进一步检查能不能以10、11、-、19数组开头；
+      //如果1开头的数字count小于M，那么1开头的数字不够M，需要进一步检查能不能以2开头，pre++，M-=count
+    }
+    private static long cntNum(long pre, long N){
+
+    }
+}
+```
+
+
+
+#### N个数两两异或
+
+给定整数m以及n各数字A1,A2,..An，将数列A中所有元素两两异或，共能得到n(n-1)/2个结果，请求出这些结果中大于m的有多少个。
+
+ 
+
+
+
+
 
 ### 前缀树Trie
 
@@ -877,6 +921,15 @@ public TreeNode recoverFromPreorder(String S) {
 3. 单词搜索：一般情况可以用回溯来处理，数据量更大的时候回溯会超时，所以需要用前缀树来处理
 
 
+
+### 线段树 & 树状数组
+
+#### 区间求和问题？
+
+一组序列中一部分连续元素累加的和。
+
++ 方法一：前缀和：【i，j】 = 【1，j】-【1，i-1】
++ 方法二：树状数组Fenwick树：**适用于区间中的元素是动态更新的情况**。利用倍增思想与二进制特性来降低更新元素的时间复杂度。
 
 
 

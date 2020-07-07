@@ -154,6 +154,167 @@ spring session + redis，将所有微服务的session都保存在redis上。
 
 
 
+#### 认证和授权问题
+
+##### 认证Authentication-你是谁
+
+cookie和session都是用来跟踪浏览器用户身份的会话方式，但是两者的应用场景不太一样。
+
+**cookie一般存在 客户端，用来保存用户的信息；**
+
++ 在cookie中保存已经登陆过的用户信息，下次访问网站的时候，页面可以自动填写一些登录的基本信息。除此之外，还能保存用户的首选项，默认主题等设置信息；
++ 使用cookie保存session或者token，向后端请求的时候带上cookie，后端可以获取到session或者token，这样就能记录用户的状态，因为HTTP是无状态的协议；
++ cookie还可以用来记录分析用户行为。
+
+**如何在服务端使用cookie？**
+
++ new Cookie()，response.addCookie(xx)；设置cookie，并返回给客户端
++ 使用spring框架提供的@CookieValue注解获取特定cookie的值；
++ request.getCookies()，可以获取所有cookie的值；
+
+
+
+session是通过服务端来记录用户的状态。服务端给特定的用户创建特定的session之后就可以标识这个用户并跟踪这个用户。相对cookie，session的安全性更高。如果需要在cookie中写入一些敏感信息，最好能讲cookie的信息加密存储，用到的时候在服务端解密。
+
+**如何通过session来进行身份验证：**
+
++ 用户登录成功之后，返回给客户端具有sessionId的cookie，当用户向后端发起请求的时候会把sessionId带上，而服务端的sessionId存在redis当中。服务端会将收到的sessionId与存储在内存或者数据库中的sessionId信息进行比较，以验证用户的身份，返回给客户端响应信息的时候会附上用户当前的状态。
++ 需要注意，客户端需要开启cookie；
++ session的过期时间
+
+
+
+**如果没有开启cookie的话，session还能用吗？**
+
+一般是通过cookie来存放sessionId的，但是cookie只是session的一种实现方案，还可以将sessionId放在url里面。
+
+
+
+**为什么cookie无法防止CSRF攻击，但是token可以？**
+
+CSRF跨域请求伪造：别人通过cookie拿到了sessionId之后代替我的身份访问系统。而token一般存储在local storage中，不会被泄露。
+
+
+
+**什么是token？**
+
+session不适合移动端使用，token则可以用在移动端。JWT（JSON Web Token）就是这种方式的实现，通过这种方式服务器端就不需要保存session数据，只用在客户端保存服务端返回的token就可以。
+
+JWT本质上是一段签名的JSON格式的数据，有3部分组成：
+
++ Header：定义了生成签名的算法以及token的类型；
++ PayLoad：用来存放实际需要传递的数据；
++ Signature：服务器通过Payload、Header、和一个密钥使用指定加密算法生成；
+
+服务器通过加密算法生成token，并发送给客户端，客户端将token保存在cookie中或者localstorage中，以后客户端发出的所有请求都会携带这个令牌，token最好放在header中的authorization中。服务端检查token并从中获取用户信息。
+
+
+
+##### 授权Authorization-你能干什么
+
+Spring Security默认进行URL访问进行拦截，并提供了验证的登录页面。
+
+springboot中的权限管理，一般来说用spring security，但是也可以用shiro。
+
+shiro需要自定义组件realm：
+
++ 
+
+
+
+**什么事OAuth2.0**
+
+OAuth事一个行业的标准授权协议，主要用于第三方应用获取有限的权限。2.0版本更快，更容易实现。
+
+本质上是一种授权机制，它的最终目的是为第三方应用颁发了一个有时效性的token，使得第三方应用能够通过该token获取相关的资源。
+
+常用于：第三方登录，支付场景和开放平台
+
+
+
+##### SSO单点登录
+
+Single sign on 用户登录多个子系统的其中一个就有权访问与其相关的其他系统。
+
+### 源码
+
+#### Springboot的启动流程
+
+```java
+@SpringBootApplication
+public class MyApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args);
+    }
+}
+```
+
+启动的时候调用SpringApplication的run方法，这个run方法会构造一个SpringApplication的实例，然后再调用这里实例的run方法就表示启动springboot。
+
+```java
+public SpringApplication(Object... sources) {
+  // sources目前是一个MyApplication的class对象
+  initialize(sources); 
+}
+
+private void initialize(Object[] sources) {
+  if (sources != null && sources.length > 0) {
+    this.sources.addAll(Arrays.asList(sources)); 
+    // 把sources设置到SpringApplication的sources属性中，目前只是一个MyApplication类对象
+  }
+  this.webEnvironment = deduceWebEnvironment(); 
+  // 判断是否是web程序(javax.servlet.Servlet和org.springframework.web.context.ConfigurableWebApplicationContext都必须在类加载器中存在)，并设置到webEnvironment属性中
+  // 从spring.factories文件中找出key为ApplicationContextInitializer的类并实例化后设置到SpringApplication的initializers属性中。这个过程也就是找出所有的应用程序初始化器
+  setInitializers((Collection) getSpringFactoriesInstances(
+      ApplicationContextInitializer.class));
+  // 从spring.factories文件中找出key为ApplicationListener的类并实例化后设置到SpringApplication的listeners属性中。这个过程就是找出所有的应用程序事件监听器
+  setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+  // 找出main类，这里是MyApplication类
+  this.mainApplicationClass = deduceMainApplicationClass();
+}
+```
+
+ApplicationContextInitializer，应用程序初始化器，做一些初始化的工作：
+
+ApplicationListener，应用程序事件(ApplicationEvent)监听器：
+
+```java
+public ConfigurableApplicationContext run(String... args) {
+  StopWatch stopWatch = new StopWatch(); // 构造一个任务执行观察器
+  stopWatch.start(); // 开始执行，记录开始时间
+  ConfigurableApplicationContext context = null;
+  configureHeadlessProperty();
+  // 获取SpringApplicationRunListeners，内部只有一个EventPublishingRunListener
+  SpringApplicationRunListeners listeners = getRunListeners(args);
+  // 上面分析过，会封装成SpringApplicationEvent事件然后广播出去给SpringApplication中的listeners所监听
+  // 这里接受ApplicationStartedEvent事件的listener会执行相应的操作
+  listeners.started();
+  try {
+    // 构造一个应用程序参数持有类
+    ApplicationArguments applicationArguments = new DefaultApplicationArguments(
+        args);
+    // 创建Spring容器
+    context = createAndRefreshContext(listeners, applicationArguments);
+    // 容器创建完成之后执行额外一些操作
+    afterRefresh(context, applicationArguments);
+    // 广播出ApplicationReadyEvent事件给相应的监听器执行
+    listeners.finished(context, null);
+    stopWatch.stop(); // 执行结束，记录执行时间
+    if (this.logStartupInfo) {
+      new StartupInfoLogger(this.mainApplicationClass)
+          .logStarted(getApplicationLog(), stopWatch);
+    }
+    return context; // 返回Spring容器
+  }
+  catch (Throwable ex) {
+    handleRunFailure(context, listeners, ex); // 这个过程报错的话会执行一些异常操作、然后广播出ApplicationFailedEvent事件给相应的监听器执行
+    throw new IllegalStateException(ex);
+  }
+}
+```
+
+
+
 ### 我的项目
 
 copd项目中的springboot中配置的启动类如下：

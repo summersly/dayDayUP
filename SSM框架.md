@@ -301,7 +301,7 @@ Proxy.newProxyInstance(loader, interfaces, invocationHandler);
 
 1. spring aop的底层动态代理，ioc容器中加入的是代理对象$proxy12，不是本类的类型；
 
-2. **cglib为没有接口的对象实现代理**
+2. **cglib为没有接口的对象实现代理** 
 
 3. 切入点表达式的写法：
 
