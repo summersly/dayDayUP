@@ -101,7 +101,7 @@ Arrays.sort()可以对对象数组进行排序，前提是**对象实现了Compa
 
 Error 表示系统级的错误 和 程序不必处理的异常，是java运行环境中的内部错误或者硬件问题。比如：内存资源不足等。对于这种错误，程序基本无能为力，除了退出运行外别无选择，它是由`Java虚拟机抛出`的。
 
-Exception和RuntimeException区别：Exception可能是checked exception，强制要求被处理，同时也可以处理修复这个问题；而runtimeException可以不被处理，是unchecked exception。非受查异常不处理的时候，由虚拟机接管，向外层抛出，要么线程中止，要么主程序终止。
+Exception和RuntimeException区别：Exception可能是checked exception，强制要求被处理，同时也可以处理修复这个问题；而runtimeException可 以不被处理，是unchecked exception。非受查异常不处理的时候，由虚拟机接管，向外层抛出，要么线程中止，要么主程序终止。
 
 自定义exception的时候，继承哪一个都要根据实际情况来判断，如果是必须处理的异常，那么就继承exception。
 

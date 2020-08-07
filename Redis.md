@@ -664,7 +664,24 @@ AOF文件重写：
 
 ### key过大
 
++ Key存储的value非常大。当value为hash，存了过多的key、value；list超长；
 
++ redis 可使用redis-cli的“--bigkeys”选项查找大Key
+
++ 分治法，加一些key前缀\后置分解（如时间、哈希前缀、用户id后缀）;
+
++ 读写大key会出现数据和查询倾斜情况；大key相关的删除或者自动过期时，会出现qps突降或者突升的情况，极端情况下，会造成主从复制异常，Redis服务阻塞无法响应请求。
+
++ 4.0版本之后，使用memory usage查找大key；
+
++ 删除大key，异步删除lazyfree机制：
+
+  `unlink`命令：代替DEL命令；
+  会把对应的大key放到`BIO_LAZY_FREE`后台线程任务队列，然后在后台异步删除；
+
++ memory usage命令和lazyfree机制分别提供了内存维度的抽样算法和异步删除优化功能，这些特性有助于我们在实际业务中更好的预防大key的产生和解决大key造成的阻塞。
+
+一个key的存储突增，
 
 
 

@@ -211,7 +211,117 @@ public int superEgg(int K, int N){
 }
 ```
 
+### 背包dp
 
+#### 01背包问题
+
+每个物品有价值w和容量v，要么取要么不取，只能取1次。求将哪些物品装入背包，可以使这些物品的总体积不超过背包容量，且总价值最大。
+
+```java
+private static int maxvalue(int N, int V, int[] v, int[] w){
+    int[] dp = new int[V+1];
+    for(int i = 0; i < N; i++){
+        for(int j = V; j >= v[i]; j--){ // 从大到小，保证前面的值还是i-1件物品的答案，没有被i刷新
+            dp[j] = Math.max(dp[j], dp[j-v[i]] + w[i]);
+        }
+    }
+    return dp[V];
+}
+// dp[i][j] = max{dp[i - 1][j], dp[i - 1][j - v[i]] + w[i]}
+```
+
+01背包问题的状态转移方程的关键：第i件物品，拿/不拿
+
+#### 完全背包问题
+
+01背包的基础上，每个物品可以拿无限次
+
+```java
+private static int maxvalue(int N, int V, int[] v, int[] w){
+    int[] dp = new int[V+1];
+    for(int i = 0; i < N; i++){
+        for(int j = v[i]; j <=V; j++){ // 从小到大，此时前面的值已经是选了i件物品的答案，可能i选择多次
+            dp[j] = Math.max(dp[j], dp[j-v[i]] + w[i]);
+        }
+    }
+    return dp[V];
+}
+// dp[i][j] = max{dp[i-1][j - k * v[i]] + k * w[i] | 0 <= k * c[i]<= j}
+```
+#### 多重背包问题
+
+每件物品有一个固定的次数上限n[i]
+
+```java
+// dp[i][j] = max{dp[i - 1][j - k * v[i]] + k * w[i] | 0 <= k <= n[i]}
+private static int maxvalue(int N, int V, int[] v, int[] w, int[] s){
+    int[] dp = new int[V+1];
+    for(int i = 0; i < N; i++){
+        for(int j = V; j >= v[i]; j--){ // 在01背包问题中嵌套一层，尝试个数k，找到最大的一种
+            for(int k = 1; k <= s[i]; k++){
+                if(j-v[i] * k < 0) continue;
+                dp[j] = Math.max(dp[j], dp[j-v[i] * k] + w[i] * k);
+            }
+        }
+    }
+    return dp[V];
+}
+
+// 多重背包问题用二进制拆分，可以转化为01背包问题
+    void run(){
+        int n = jin.nextInt();
+        int m = jin.nextInt();
+// 二进制拆分 (v,w),(v<<1,w<<1),(v<<2,w<<2)，变成选择物品i的0bit、1bit、2bit
+        int p = 1;
+        for (int i = 1; i <= n ; i++){
+            int V = jin.nextInt();
+            int W = jin.nextInt();
+            int S = jin.nextInt();
+            int k = 1;
+            while (S > k){
+                v[p] = V*k;
+                w[p] = W*k;
+                S -= k;
+                k *= 2;
+                p++;
+            }
+            if (S > 0){
+                v[p] = V*S;
+                w[p] = W*S;
+                p ++;
+            }
+        }
+        int res = dp(p, m);
+        System.out.println(res);
+
+    }
+    int dp(int n, int m){
+        int[] f = new int[maxN];
+        for (int i= 1; i <= n ; i ++){
+            for (int j = m ; j>= v[i] ; j--){
+                f[j] = Math.max(f[j], f[j - v[i]] + w[i]);
+            }
+        }
+        return f[m];
+
+    }
+    int maxN = 200002;
+    int[] v = new int[maxN];
+    int[] w = new int[maxN];
+
+```
+
+#### 分组背包问题
+
+每组物品若干件，同组内的物品只能选1个
+
+```cpp
+    for (int i = 1; i <= n; i ++) // 枚举物品
+        for (int j = m; j >= 0; j --) // 枚举体积
+            for (int k = 0; k < s[i]; k ++) // 枚举第k组
+                if (j >= v[i][k]) // 务必使其有意义；第i组第k个物品
+                    f[j] = max(f[j], f[j - v[i][k]] + w[i][k]);
+```
 
 ### 贪心算法--动态规划的特殊情况
 

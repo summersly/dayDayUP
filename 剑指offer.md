@@ -1949,6 +1949,21 @@ private void dfs(TreeNode root){
 }
 ```
 
+不用中序遍历：分治
+
+```java
+public int kthSmallest(TreeNode root, int k) {
+  int lcount = countTree(root.left);
+  if(n == k-1) return root.val;
+  else if(n > k-1) return kthSmallest(root.left, k);
+  else return kthSmallest(root.right, k-n-1);
+}
+private int countTree(TreeNode root){
+  if(root == null) return 0;
+  return countTree(root.left) + 1 + countTree(root.right);
+}
+```
+
 
 
 #### T55 二叉树的深度
